@@ -1,0 +1,619 @@
+RED WINE QUALITY ANALYSIS by ANTONY
+========================================================
+
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+library(knitr)
+library(markdown)
+```
+
+```{r}
+# Load the Data
+
+df = read.csv('wineQualityReds.csv')
+
+#Read the Dataset
+
+head(df,5)
+
+```
+
+# Introduction: 
+
+In this Project, I will be Analyzing the Red Wine Dataset to understand how the different variables in the dataset impacts the quality of the wine.In my Analysis, Intially I will be exploring the variables indiviually and then I will explore the corelation between the variables.
+
+# Univariate Plots Section:
+
+```{r message=FALSE,warning=FALSE}
+
+#Structure of the Dataset
+
+str(df)
+
+```
+
+```{r message=FALSE,warning=FALSE}
+#Summary of the dataset
+
+summary(df)
+
+```
+
+# Univariate Analysis:
+
+```{r message=FALSE,warning=FALSE}
+#Histogram for Quality
+
+qplot(x=quality,data=df,binwidth = 1,
+      main='Histogram for Quality')+
+  scale_x_continuous(breaks=seq(2,8,1))
+
+
+
+```
+
+
+> One thing, I am noticing in the above plot is the most of the wines are fall under the quality of 5 and 6.so what am thiking it's make sense to create a new categorical variable from this quality variable.
+
+```{r message=FALSE,warning=FALSE}
+
+#Adding a new Variable Rating
+
+df$rating <- ifelse(df$quality < 5, 'Bad', ifelse(
+  df$quality < 7, 'Average', 'Good'))
+
+#Order the rating variable
+
+df$rating <-ordered(df$rating, 
+                    levels =c('Bad','Average','Good'))
+
+```
+
+
+```{r message=FALSE,warning=FALSE}
+
+#Histogram for Rating
+
+qplot(x=rating,data=df,,main='Histogram for Rating')
+
+```
+
+
+```{r message=FALSE,warning=FALSE}
+
+#Histogram for Fixed Acidity
+
+qplot(x=fixed.acidity,data=df,main='Histogram for Fixed Acidity') 
+
+
+```
+
+> The above Fixed Acididty plot is right skewed. There are outliers present in the plot.Let's remove the outliers and rescale the plot.
+
+```{r message=FALSE,warning=FALSE}
+
+#Fixed Acidity (Remove Outliers)
+
+qplot(x=fixed.acidity,data=df,
+      main='Histogram for Fixed Acidity - Rescaled')+
+  scale_x_continuous(limit=c(4,12),breaks=seq(4,12,2))
+
+```
+```{r message=FALSE,warning=FALSE}
+
+#VOlatile Acidity
+
+qplot(x=volatile.acidity,data=df,
+      main='Histogram for volatile Acidity')+
+  scale_x_continuous(limit=c(0,1),breaks=seq(0,11,0.1))
+
+
+```
+
+> The Above plot has been rescaled to remove outliers.The below bimodal distribution has three peaks at 0.4,0.5 and 0.6
+
+```{r message=FALSE,warning=FALSE}
+
+# Compare Salt content based on the rating of the wine 
+
+p1 <- qplot(x=chlorides , data = subset(df,df$rating == 'Bad'),
+            main='Histogram for chlorides - Bad Quality Wine')
+
+p2 <- qplot(x=chlorides , data = subset(df,df$rating == 'Average'),
+            main='Histogram for chlorides - Average Quality Wine')
+
+p3 <- qplot(x=chlorides , data = subset(df,df$rating == 'Good'),
+            main='Histogram for chlorides - Good Quality Wine')
+
+grid.arrange(p1,p2,p3)
+
+```
+
+> By looking at all the three plots based on the rating of the wine, The Amount of chlorides in the Average rating wine follows alomst a normal distribution if we remove the outlier.But whereas, the Bad and Good quality wines has a right skewed distributions with very high outliers which will certainly affect the mean.
+
+```{r message=FALSE,warning=FALSE}
+
+#Residual Sugar
+
+p4 <- qplot(x=residual.sugar , data = subset(df,df$rating == 'Bad'),
+            main='Histogram for Residual.sugar - Bad Quality Wine')
+
+p5 <- qplot(x=residual.sugar , data = subset(df,df$rating == 'Average'),
+            main='Histogram for Residual.sugar - Average Quality Wine')
+
+p6 <- qplot(x=residual.sugar , data = subset(df,df$rating == 'Good'),
+            main='Histogram for Residual.sugar - Good Quality Wine')
+
+grid.arrange(p4,p5,p6)
+
+```
+
+> Looking at the residual Sugar content for the wines based on the rating.It looks like all of them are skewed to the right.Particularly there are the very high outliers in the Good Quality wine.But the average quality wines are very less skewed when compared to others.Also sugar content of most of the wines is very less, especially for Average quality wines.
+
+```{r message=FALSE,warning=FALSE}
+
+#pH
+
+p7 <- qplot(x=pH , data = subset(df,df$rating == 'Bad'), 
+            main='Histogram for pH - Bad Quality Wine')
+
+p8 <- qplot(x=pH , data = subset(df,df$rating == 'Average'), 
+            main='Histogram for pH - Average Quality Wine')
+
+p9 <- qplot(x=pH , data = subset(df,df$rating == 'Good'), 
+            main='Histogram for pH - Good Quality Wine')
+
+grid.arrange(p7,p8,p9)
+
+```
+
+> Ph level does fall under 3-3.6 for most of the wines irrespective of their qualities.There are outliers in all the qualites of wine
+
+
+```{r message=FALSE,warning=FALSE}
+
+#Alcohol
+
+p10 <- qplot(x=alcohol , data = subset(df,df$rating == 'Bad'),
+             main='Histogram for Alcohol - Bad Quality Wine')
+
+p11 <- qplot(x=alcohol , data = subset(df,df$rating == 'Average'),
+             main='Histogram for Alcohol - Average Quality Wine')
+
+p12 <- qplot(x=alcohol , data = subset(df,df$rating == 'Good'),
+             main='Histogram for Alcohol - Good Quality Wine')
+
+grid.arrange(p10,p11,p12) 
+
+```
+
+> For Alcohol, The distribution again is skewed with Outliers are present in the distirbution. Also the Alcohol content for most of the wines are between 9-12.
+
+> Below is the log10 distribution of Alcohol.
+
+```{r message=FALSE,warning=FALSE}
+
+#Alcohol Log10
+
+p10 <- qplot(x=alcohol , data = subset(df,df$rating == 'Bad'),
+             main='Histogram for Alcohol - Bad Quality Wine')+
+              scale_x_log10(breaks = seq(8,14,1))
+
+p11 <- qplot(x=alcohol , data = subset(df,df$rating == 'Average'),
+             main='Histogram for Alcohol - Average Quality Wine')+
+              scale_x_log10(breaks = seq(8,14,1))
+
+p12 <- qplot(x=alcohol , data = subset(df,df$rating == 'Good'),
+             main='Histogram for Alcohol - Good Quality Wine')+ 
+              scale_x_log10(breaks = seq(8,14,1))
+
+grid.arrange(p10,p11,p12) 
+```
+
+```{r message=FALSE,warning=FALSE}
+
+#Citric Acid
+
+p13 <- qplot(x=citric.acid , data = subset(df,df$rating == 'Bad'),
+             main='Histogram for Citric Acid - Bad Quality Wine')
+              
+
+p14 <- qplot(x=citric.acid , data = subset(df,df$rating == 'Average'),
+             main='Histogram for Citric Acid - Average Quality Wine')
+             
+
+p15 <- qplot(x=citric.acid , data = subset(df,df$rating == 'Good'),
+             main='Histogram for Citric Acid - Good Quality Wine') 
+              
+
+grid.arrange(p13,p14,p15) 
+
+```
+
+> This distribution skewed with lots of Outliers.
+
+```{r message=FALSE,warning=FALSE}
+
+#Suplhates
+
+p16 <- qplot(x=sulphates , data = subset(df,df$rating == 'Bad'),
+             main='Histogram for sulphates - Bad Quality Wine')
+              
+
+p17 <- qplot(x=sulphates , data = subset(df,df$rating == 'Average'),
+             main='Histogram for sulphates - Average Quality Wine')
+             
+
+p18 <- qplot(x=sulphates , data = subset(df,df$rating == 'Good'),
+             main='Histogram for sulphates - Good Quality Wine') 
+              
+
+grid.arrange(p16,p17,p18) 
+
+```
+
+> This is again a skewed distributin with less outliers.
+
+### What is the structure of your dataset?
+
+There are 1599 observations in the dataset with 14 variables(fixed.acidity,   volatile.acidity,citric.acid,residual.sugar,chlorides,free.sulfur.dioxide,total.sulfur.dioxide,density,pH,sulphates,alcohol,quality,rating).The Quality and Rating are ordered variables with following levels
+
+Bad -----> Good
+
+Quality: 3,4,5,6,7,8
+Rating: Bad,Average,Good.
+
+Other Observations:
+
+1.Most of the of Average Quality wines with Quality levels of 5 and 6.
+2.Mean quality of all the wines are 5.63
+3.Median quality of all the wines are 6
+4.Mean and Median PH levels of all the wines is 3.31
+5.Mean and Median Alcohol content are 10.2 and 10.4 respecively 
+
+### What is/are the main feature(s) of interest in your dataset?
+
+Quality and Rating are the main features in the dataset. we can explore the features like Alcohol,PH,Chlorides,Residual Sugar based on the quality and Rating.
+
+
+### What other features in the dataset do you think will help support your \
+
+Alcohol,PH,Chlorides,Residual Sugar,Fixed Acidity,Volatile Acidity are the other features in the dataset
+
+### Did you create any new variables from existing variables in the dataset?
+
+yes,I have created a new categorical variable called 'Rating' based on the Quality of the wine.
+
+### Of the features you investigated, were there any unusual distributions? 
+
+yes, when i am exploring the indivual variables based on the quality, i found outliers and skewed distributions.
+
+
+# Bivariate Plots Section
+
+```{r emessage=FALSE,warning=FALSE}
+
+#Fixed Acidity Vs Quality
+
+p1 <- ggplot(aes(x=quality , y= fixed.acidity,group=quality), data=df)+
+  geom_point()+ggtitle('Fixed Acidity Vs Quality')
+
+p2 <- ggplot(aes(x=quality , y= fixed.acidity,group=quality), data=df)+
+  geom_boxplot()+ggtitle('Fixed Acidity Vs Quality')
+
+grid.arrange(p1,p2)
+
+```
+
+> Fixed Acidity doesnt have any co-realtion with Quality.Also Box plot gives us better understanding than scatter plot
+
+```{r message=FALSE,warning=FALSE}
+
+#Volatile Acidity Vs Quality
+
+ggplot(aes(x=quality , y= volatile.acidity,group=quality), data=df)+
+  geom_boxplot()+ggtitle('Volatile Acidity Vs Quality')
+
+
+```
+
+> Volatile Acidity Vs Quality has a negative co-relation.As the quality increased the median of the volatile decreases.
+
+```{r message=FALSE,warning=FALSE}
+
+#chlorides Vs Quality
+
+ggplot(aes(x=quality , y= chlorides,group=quality), data=df)+
+  geom_boxplot()+ggtitle('chlorides Vs Quality')
+
+```
+
+> chlorides has weakly co-related with Quality.As the median decreases,when the quality increases.so we can predict that better quality wines has lesser chlorides.
+
+```{r message=FALSE,warning=FALSE}
+
+#ResidualSugar Vs Quality
+
+ggplot(aes(x=quality , y= residual.sugar,group=quality), data=df)+
+  geom_boxplot()+ggtitle('ResidualSugar Vs Quality')
+
+```
+
+> Residual sugar has no relation with Quality. Also the Average quality wines has a very high outliers
+
+```{r message=FALSE,warning=FALSE}
+#Ph Vs rating
+
+ggplot(aes(x=rating , y= pH,group=rating), data=df)+
+  geom_boxplot()+ggtitle('Ph Vs Quality')
+
+```
+
+> pH has a negative co-relation with Rating. As rating of the wine increases, pH vaue decreases.Also we can able to see the outliers
+
+```{r message=FALSE,warning=FALSE}
+
+ggplot(aes(x=rating , y= alcohol,group=rating), data=df)+
+  geom_boxplot()+ggtitle('alcohol Vs Rating')
+
+```
+
+> Good wines has more alcohol content.Also, the median of Bad and Average rating wines are same.Also there are outliers present for Average rating wines.
+
+```{r message=FALSE,warning=FALSE}
+#citric.acid Vs quality
+
+ggplot(aes(x=quality , y= citric.acid,group=quality), data=df)+
+  geom_boxplot()+ggtitle('citric.acid Vs quality')
+
+```
+
+> Wow!. Citric Acid has a strong postive reltionship with Quality.
+
+```{r message=FALSE,warning=FALSE}
+
+#sulphates Vs quality
+
+ggplot(aes(x=quality , y= sulphates,group=quality), data=df)+
+  geom_boxplot()+ggtitle('sulphates Vs quality')
+
+```
+
+> That's a suprise too. sulphates has a strong postive reltionship with Quality.
+
+# Bivariate Analysis
+
+
+### Talk about some of the relationships you observed in this part of the 
+
+1.Fixed Acidity doesnt have any co-realtion with Quality
+2. Volatile Acidity has a negative co-relation with Quality
+3. chlorides has weakly co-related with Quality
+4. Residual sugar has no relation with Quality. Also the Average quality wines has a very high outliers
+5. pH has a negative co-relation with Rating
+6. Good Rating wines has more alcohol content
+7. Citric Acid has a strong postive raltionship with Quality.
+
+### Did you observe any interesting relationships between the other features \
+
+1. I was suprised with Citric Acid having a positive realtionship with Quality.
+2. Also there are many outliers present in the distribution for most of the variables. 
+
+### What was the strongest relationship you found?
+
+Citric Acid Vs Quality.
+Suplhates Vs Quality.
+
+# Multivariate Plots Section
+
+```{r message=FALSE,warning=FALSE}
+
+#Citric Acid vs Alcohol
+
+ggplot(aes(x=citric.acid,y=alcohol),data=df)+
+  geom_point(aes(color=quality))+
+  geom_smooth(method = 'lm' ,color='Orange')+
+  ggtitle('Citric Acid vs Alcohol')
+
+```
+
+> There is no realtion between citric acid and alcohol. so let's replot citirc acid with another acidic variable.
+
+```{r message=FALSE,warning=FALSE}
+
+#Citric Acid vs Fixed Acidity
+
+ggplot(aes(x=fixed.acidity,y=citric.acid),data=df)+
+  geom_point(aes(color=quality))+
+  geom_smooth(method = 'lm' ,color='Orange')+
+  facet_wrap(~df$rating)+
+  ggtitle('Citric Acid vs Fixed Acidity')
+
+```
+
+> There is a positive corelaion between cirtic acid and Fixed Acidity either with respect to quality for Good wines.
+
+```{r message=FALSE,warning=FALSE}
+
+#Citric Acid vs Volatile Acidity
+
+ggplot(aes(x=volatile.acidity,y=citric.acid),data=df)+
+  geom_point(aes(color=quality))+
+  geom_smooth(method = 'lm' ,color='Orange')+
+  facet_wrap(~df$rating)+
+  ggtitle('Citric Acid vs Volatile Acidity')
+
+```
+
+> There is Negative corelaion between citric acid and Volatile Acidity with respect to quality.Also it shows lower volatile acidity and higher citric acid gives better wines. 
+
+```{r message=FALSE,warning=FALSE}
+
+#Fixed Acidity vs Volatile Acidity
+
+ggplot(aes(x=volatile.acidity,y=fixed.acidity),data=df)+
+  geom_point(aes(color=quality))+
+  geom_smooth(method = 'lm' ,color='Orange')+
+  facet_wrap(~df$rating)+
+  ggtitle('Fixed Acidity vs Volatile Acidity')
+
+```
+
+> I am not seeing any corealtion here.
+
+```{r message=FALSE,warning=FALSE}
+
+#volatile.acidity vs Alcohol
+
+ggplot(aes(x=alcohol,y=volatile.acidity),data=df)+
+  geom_point(aes(color=quality))+
+  geom_smooth(method = 'lm' ,color='Orange')+
+  ggtitle('volatile.acidity vs Alcohol')+
+  facet_wrap(~df$rating)
+
+```
+
+> If we look at the Good wines, They have very less volatile acidity. so we can predict, Lesser Volatile acid with more alcohol content make better wines.
+
+```{r message=FALSE,warning=FALSE}
+
+#pH vs Alcohol
+
+ggplot(aes(x=alcohol,y=pH),data=df)+
+  geom_point(aes(color=quality))+
+  geom_smooth(method = 'lm' ,color='Orange')+
+  ggtitle('pH vs Alcohol')+
+  facet_wrap(~df$rating)
+
+```
+
+> If we look at the Bad Rated wines, They have a positive corelation between pH and alcohol with respect to quality.
+
+```{r message=FALSE,warning=FALSE}
+
+#chlorides vs Alcohol
+
+ggplot(aes(x=alcohol,y=chlorides),data=df)+
+  geom_point(aes(color=quality))+
+  geom_smooth(method = 'lm' ,color='Orange')+
+  ggtitle('chlorides vs Alcohol')+
+  facet_wrap(~df$rating)
+
+```
+
+> There is a negative corelation, low chlorides with high alcohol content make better wines.
+
+```{r echo=FALSE, warning=FALSE}
+
+#Residual.sugar vs Alcohol
+
+ggplot(aes(x=alcohol,y=residual.sugar),data=df)+
+  geom_point(aes(color=quality))+
+  geom_smooth(method = 'lm' ,color='Orange')+
+  ggtitle('Residual sugar vs Alcohol')+
+  facet_wrap(~df$rating)
+
+```
+
+> There is no such corelation for Average and Good Quality wines.But for Bad Quality wines there is a postive corelation between residual sugar and alcohol.
+
+# Multivariate Analysis
+
+1. Low chlorides with high alcohol content make better wines.
+2. Low Volatile acid with high alcohol content make better wines
+
+
+### Talk about some of the relationships you observed in this part of the \
+
+1. There is Negative corelaion between citric acid and Volatile Acidity with respect to quality.Also it shows lower volatile acidity and higher citric acid gives better wines. 
+2. If we look at the Bad Rated wines, They have a positive corelation between pH and alcohol with respect to quality.
+
+### Were there any interesting or surprising interactions between features?
+
+1. There was no relationship between Fixed Acidity and Volatile Acidity 
+2. There is no relationship between pH and Alcohol. 
+
+
+# Final Plots and Summary
+
+###PLOT 1: Influence of Citric Acid on Wine Quality
+
+```{r message=FALSE,warning=FALSE}
+#citric.acid Vs quality
+
+p1 <- ggplot(aes(x=quality,y= citric.acid,group=quality),data=df)+
+  geom_boxplot()+
+  ggtitle('Influence of Citric Acid on Wine Quality')+
+  xlab('quality')+
+  ylab('citric acid (g/dm^3)')
+
+p2 <- ggplot(aes(x=rating,y= citric.acid,group=rating),data=df)+
+  geom_boxplot()+
+  ggtitle('Influence of Citric Acid on Wine Rating')+
+  xlab('rating')+
+  ylab('citric acid (g/dm^3)')
+
+grid.arrange(p1,p2)
+
+```
+
+### The Above plot tells us that citric acid does influences the wine quality.There is a postive corelation between them, As the higher the citric acid content better the red wine quality.
+
+
+### PLOT 2: Influence of sulphates on Wine Quality
+
+```{r message=FALSE,warning=FALSE}
+#sulphates Vs quality
+
+p1 <- ggplot(aes(x=quality,y= sulphates,group=quality),data=df)+
+  geom_boxplot()+
+  ggtitle('Influence of sulphates on Wine Quality')+
+  xlab('quality')+
+  ylab('sulphates (g/dm^3)')
+
+p2 <- ggplot(aes(x=rating,y= sulphates,group=rating),data=df)+
+  geom_boxplot()+
+  ggtitle('Influence of sulphates on Wine Rating')+
+  xlab('rating')+
+  ylab('sulphates (g/dm^3)')
+
+grid.arrange(p1,p2)
+
+```
+
+### The Above plot tells us that sulphates does influences the wine quality.There is a postive corelation between them, As the higher sulphates content better the red wine quality.
+
+
+### PLOT 3: Influence of Chlorides and Alcohol over wine quality
+
+```{r message=FALSE,warning=FALSE}
+
+#chlorides vs Alcohol
+
+ggplot(aes(x=alcohol,y=chlorides),data=df)+
+  geom_point(aes(color=quality))+
+  geom_smooth(method = 'lm' ,color='Orange')+
+  ggtitle('Influence of Chlorides and Alcohol over wine quality')+
+  facet_wrap(~df$rating)+
+  xlab('alcohol (%)')+
+  ylab('chlorides (g/dm^3)')
+
+```
+
+### By Analyzing multivariate plots of chrolides and Alcohol over wine Quality.we can see a negative corealtion between chlorides and alcohol.As low chloride and high alcholic content make better wines.
+
+------
+
+# Reflection
+
+> In this dataset,the main struggle i faced is with the outliers.Every feature has an outlier hence it formed a skewed distribution which certainly affects the analysis process unless we re-shape the feature by omiting the outliers.
+  Also i have categorized the quality of wine by giving them rating as 'Bad','Average' and 'Good' that helped my analysis work quite easily by predicting the behaviour of the features with respect to the rating of the wines.
+  Also i have noticed pH is quite constant irespective of the quality of the wine.Also i have suprised with citric acid and sulphates having a postive corealtion with the quality of the wines.Intially for bivariant plots, I have plotted my dataset using scatter plot but it didnt give a good view of understanding, so i plotted box plot which helped me better to understand the realtionship between then features.
+  Also in the future,i would like to take a wine dataset with more observations.As in this dataset most of the wines are fall under Average category and we had very less observations for Bad and Good Quality wines.
+  Also i would like to analyze a wine dataset with more features as well,like the price and popularity and country orgin etc. So it will be interesting to analyze the dataset if we have much more unique information about each wines.
+  
+
